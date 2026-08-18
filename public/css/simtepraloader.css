@@ -1,0 +1,88 @@
+/* =========================================================
+   SIMTEPRA GLOBAL LOADER
+   ========================================================= */
+
+#simtepraloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(248, 249, 250, 0.96);
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+/* Ketika halaman sudah selesai loading */
+#simtepraloader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Lingkaran loading */
+.simtepraloader-spinner {
+    width: 46px;
+    height: 46px;
+
+    border: 4px solid #dee2e6;
+    border-top-color: #007bff;
+
+    border-radius: 50%;
+
+    animation: simtepraloader-spin 0.75s linear infinite;
+}
+
+/* Animasi */
+@keyframes simtepraloader-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   SIMTEPRA - Pagination
+   ========================================================= */
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-item {
+    margin-left: 2px;
+}
+
+.pagination .page-link {
+    min-width: 34px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 4px 10px;
+
+    border-radius: 4px !important;
+
+    font-size: 13px;
+}
+
+.pagination .page-item.active .page-link {
+    font-weight: 600;
+}
+
+.pagination .page-item.disabled .page-link {
+    cursor: not-allowed;
+}
