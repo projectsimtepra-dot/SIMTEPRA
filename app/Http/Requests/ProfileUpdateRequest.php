@@ -10,12 +10,13 @@ use Illuminate\Validation\Rule;
 class ProfileUpdateRequest extends FormRequest
 {
     /**
-     * Menentukan apakah pengguna boleh melakukan request.
+     * Menentukan apakah pengguna boleh memperbarui profil.
      */
     public function authorize(): bool
     {
         return $this->user()?->can('profile.edit') ?? false;
     }
+
 
     /**
      * Aturan validasi profile.
@@ -28,7 +29,7 @@ class ProfileUpdateRequest extends FormRequest
 
             /*
             |--------------------------------------------------------------------------
-            | Data Akun
+            | Nama Lengkap
             |--------------------------------------------------------------------------
             */
 
@@ -38,12 +39,20 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Email
+            |--------------------------------------------------------------------------
+            */
+
             'email' => [
                 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:255',
+
                 Rule::unique(User::class)
                     ->ignore($this->user()->id),
             ],
@@ -51,51 +60,11 @@ class ProfileUpdateRequest extends FormRequest
 
             /*
             |--------------------------------------------------------------------------
-            | Data Profile
+            | Foto Profil
             |--------------------------------------------------------------------------
             */
 
-            'nama_lengkap' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'nip' => [
-                'nullable',
-                'string',
-                'max:30',
-                Rule::unique('profiles', 'nip')
-                    ->ignore(
-                        $this->user()?->profile?->id
-                    ),
-            ],
-
-            'no_hp' => [
-                'nullable',
-                'string',
-                'max:20',
-            ],
-
-            'jabatan' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
-
-            'instansi' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
-
-            'alamat' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-
-            'foto' => [
+            'profile_photo' => [
                 'nullable',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
@@ -104,6 +73,7 @@ class ProfileUpdateRequest extends FormRequest
         ];
     }
 
+
     /**
      * Pesan validasi Bahasa Indonesia.
      */
@@ -111,15 +81,23 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
 
+            /*
+            | Nama
+            */
+
             'name.required' =>
-                'Nama akun wajib diisi.',
+                'Nama lengkap wajib diisi.',
 
             'name.string' =>
-                'Nama akun harus berupa teks.',
+                'Nama lengkap harus berupa teks.',
 
             'name.max' =>
-                'Nama akun maksimal 255 karakter.',
+                'Nama lengkap maksimal 255 karakter.',
 
+
+            /*
+            | Email
+            */
 
             'email.required' =>
                 'Email wajib diisi.',
@@ -127,11 +105,11 @@ class ProfileUpdateRequest extends FormRequest
             'email.string' =>
                 'Email harus berupa teks.',
 
-            'email.email' =>
-                'Format email tidak valid.',
-
             'email.lowercase' =>
                 'Email harus menggunakan huruf kecil.',
+
+            'email.email' =>
+                'Format email tidak valid.',
 
             'email.max' =>
                 'Email maksimal 255 karakter.',
@@ -140,64 +118,21 @@ class ProfileUpdateRequest extends FormRequest
                 'Email tersebut sudah digunakan oleh pengguna lain.',
 
 
-            'nama_lengkap.required' =>
-                'Nama lengkap wajib diisi.',
+            /*
+            | Foto Profil
+            */
 
-            'nama_lengkap.string' =>
-                'Nama lengkap harus berupa teks.',
-
-            'nama_lengkap.max' =>
-                'Nama lengkap maksimal 255 karakter.',
-
-
-            'nip.string' =>
-                'NIP harus berupa teks.',
-
-            'nip.max' =>
-                'NIP maksimal 30 karakter.',
-
-            'nip.unique' =>
-                'NIP tersebut sudah digunakan oleh pengguna lain.',
-
-
-            'no_hp.string' =>
-                'Nomor HP harus berupa teks.',
-
-            'no_hp.max' =>
-                'Nomor HP maksimal 20 karakter.',
-
-
-            'jabatan.string' =>
-                'Jabatan harus berupa teks.',
-
-            'jabatan.max' =>
-                'Jabatan maksimal 150 karakter.',
-
-
-            'instansi.string' =>
-                'Instansi harus berupa teks.',
-
-            'instansi.max' =>
-                'Instansi maksimal 150 karakter.',
-
-
-            'alamat.string' =>
-                'Alamat harus berupa teks.',
-
-            'alamat.max' =>
-                'Alamat maksimal 1000 karakter.',
-
-
-            'foto.image' =>
+            'profile_photo.image' =>
                 'File yang dipilih harus berupa gambar.',
 
-            'foto.mimes' =>
+            'profile_photo.mimes' =>
                 'Foto harus berformat JPG, JPEG, PNG, atau WEBP.',
 
-            'foto.max' =>
+            'profile_photo.max' =>
                 'Ukuran foto maksimal 2 MB.',
         ];
     }
+
 
     /**
      * Nama atribut agar pesan validasi lebih mudah dipahami.
@@ -205,15 +140,9 @@ class ProfileUpdateRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' => 'nama akun',
+            'name' => 'nama lengkap',
             'email' => 'email',
-            'nama_lengkap' => 'nama lengkap',
-            'nip' => 'NIP',
-            'no_hp' => 'nomor HP',
-            'jabatan' => 'jabatan',
-            'instansi' => 'instansi',
-            'alamat' => 'alamat',
-            'foto' => 'foto profil',
+            'profile_photo' => 'foto profil',
         ];
     }
 }

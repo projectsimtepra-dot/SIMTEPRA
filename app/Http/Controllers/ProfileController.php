@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\Profile;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -21,25 +19,13 @@ class ProfileController extends Controller
             403
         );
 
-        $user = auth()->user()->load('profile');
+        $user = auth()->user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Buat Profile Otomatis Jika Belum Ada
-        |--------------------------------------------------------------------------
-        */
-
-        $profile = $user->profile;
-
-        if (!$profile) {
-            $profile = $user->profile()->create([
-                'nama_lengkap' => $user->name,
-            ]);
-        }
+        $activeTab = request()->query('tab', 'profil');
 
         return view(
             'profile.edit',
-            compact('user', 'profile')
+            compact('user', 'activeTab')
         );
     }
 
@@ -64,122 +50,73 @@ class ProfileController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Ambil / Buat Profile
+        | Update Data User
         |--------------------------------------------------------------------------
         */
 
-        $profile = $user->profile;
+        $emailChanged = $user->email !== $validated['email'];
 
-        if (!$profile) {
-            $profile = new Profile();
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
 
-            $profile->user_id = $user->id;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Jika Email Berubah
+        |--------------------------------------------------------------------------
+        |
+        | Email baru harus diverifikasi kembali.
+        |
+        */
+
+        if ($emailChanged) {
+            $user->email_verified_at = null;
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Update User & Profile
+        | Upload Foto Profil
         |--------------------------------------------------------------------------
         */
 
-        DB::transaction(function () use (
-            $user,
-            $profile,
-            $validated,
-            $request
-        ) {
+        if ($request->hasFile('profile_photo')) {
 
             /*
-            |--------------------------------------------------------------------------
-            | Update Data User
-            |--------------------------------------------------------------------------
+            |----------------------------------------------------------------------
+            | Hapus Foto Lama
+            |----------------------------------------------------------------------
             */
 
-            $emailChanged = $user->email !== $validated['email'];
-
-            $user->name = $validated['name'];
-            $user->email = $validated['email'];
-
-            /*
-            |--------------------------------------------------------------------------
-            | Jika Email Berubah
-            |--------------------------------------------------------------------------
-            |
-            | Email baru harus diverifikasi kembali.
-            |
-            */
-
-            if ($emailChanged) {
-                $user->email_verified_at = null;
-            }
-
-            $user->save();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Update Data Profile
-            |--------------------------------------------------------------------------
-            */
-
-            $profile->nama_lengkap =
-                $validated['nama_lengkap'];
-
-            $profile->nip =
-                $validated['nip'] ?? null;
-
-            $profile->no_hp =
-                $validated['no_hp'] ?? null;
-
-            $profile->jabatan =
-                $validated['jabatan'] ?? null;
-
-            $profile->instansi =
-                $validated['instansi'] ?? null;
-
-            $profile->alamat =
-                $validated['alamat'] ?? null;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Upload Foto Profil
-            |--------------------------------------------------------------------------
-            */
-
-            if ($request->hasFile('foto')) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Hapus Foto Lama
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    $profile->foto &&
-                    Storage::disk('public')
-                        ->exists($profile->foto)
-                ) {
-                    Storage::disk('public')
-                        ->delete($profile->foto);
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Simpan Foto Baru
-                |--------------------------------------------------------------------------
-                */
-
-                $profile->foto = $request
-                    ->file('foto')
-                    ->store('profiles', 'public');
+            if (
+                $user->profile_photo &&
+                Storage::disk('public')->exists($user->profile_photo)
+            ) {
+                Storage::disk('public')->delete(
+                    $user->profile_photo
+                );
             }
 
 
-            $profile->save();
-        });
+            /*
+            |----------------------------------------------------------------------
+            | Simpan Foto Baru
+            |----------------------------------------------------------------------
+            */
+
+            $user->profile_photo = $request
+                ->file('profile_photo')
+                ->store('profiles', 'public');
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan Perubahan
+        |--------------------------------------------------------------------------
+        */
+
+        $user->save();
 
 
         /*
@@ -194,17 +131,5 @@ class ProfileController extends Controller
                 'status',
                 'profile-updated'
             );
-    }
-
-
-    /**
-     * Menghapus akun pengguna.
-     *
-     * Untuk sementara fitur hapus akun
-     * tidak digunakan pada SIMTEPRA.
-     */
-    public function destroy(): never
-    {
-        abort(404);
     }
 }

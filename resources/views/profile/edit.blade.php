@@ -2,26 +2,36 @@
 
 @section('title', 'Profil Saya')
 
+
+{{-- =========================================================
+     HEADER
+========================================================= --}}
+
 @section('content_header')
 
     <div class="d-flex justify-content-between align-items-center">
 
-        <div>
-            <h1>Profil Saya</h1>
-        </div>
+        <h1 class="mb-0">
+            Profil Saya
+        </h1>
 
     </div>
 
 @stop
 
 
+{{-- =========================================================
+     CONTENT
+========================================================= --}}
+
 @section('content')
 
+    {{-- Loader SIMTEPRA --}}
     @include('components.simtepraloader')
 
 
     {{-- =========================================================
-         NOTIFIKASI BERHASIL
+         NOTIFIKASI
     ========================================================== --}}
 
     @if(session('status'))
@@ -38,7 +48,11 @@
                 data-dismiss="alert"
                 aria-label="Close"
             >
-                <span aria-hidden="true">&times;</span>
+
+                <span aria-hidden="true">
+                    &times;
+                </span>
+
             </button>
 
         </div>
@@ -47,28 +61,75 @@
 
 
     {{-- =========================================================
-         INFORMASI PROFIL
+         HEADER PROFIL
     ========================================================== --}}
 
-    <div class="card">
+    <div class="card mb-3">
 
-        <div class="card-header">
+        <div
+            class="card-body"
+            style="
+                background: linear-gradient(135deg, #007bff, #4f8df7);
+                border-radius: .25rem;
+                color: #fff;
+            "
+        >
 
-            <h3 class="card-title">
+            <div class="d-flex align-items-center">
 
-                <i class="fas fa-user-edit mr-1"></i>
 
-                Informasi Profil
+                {{-- =================================================
+                     FOTO PROFIL
+                ================================================== --}}
 
-            </h3>
+                <div class="mr-3">
 
-        </div>
+                    <img
+                        src="{{ $user->adminlte_image() }}"
+                        alt="Foto Profil {{ $user->name }}"
+                        class="rounded-circle"
+                        style="
+                            width: 85px;
+                            height: 85px;
+                            object-fit: cover;
+                            border: 4px solid rgba(255,255,255,.7);
+                        "
+                    >
 
-        <div class="card-body">
+                </div>
 
-            @include(
-                'profile.partials.update-profile-information-form'
-            )
+
+                {{-- =================================================
+                     INFORMASI USER
+                ================================================== --}}
+
+                <div>
+
+                    <h3 class="mb-1">
+                        {{ $user->name }}
+                    </h3>
+
+
+                    <div class="mb-2">
+
+                        <i class="fas fa-envelope mr-1"></i>
+
+                        {{ $user->email }}
+
+                    </div>
+
+
+                    <span class="badge badge-light text-primary">
+
+                        <i class="fas fa-user-shield mr-1"></i>
+
+                        {{ $user->getRoleNames()->first() ?? 'Pengguna' }}
+
+                    </span>
+
+                </div>
+
+            </div>
 
         </div>
 
@@ -76,57 +137,124 @@
 
 
     {{-- =========================================================
-         UBAH PASSWORD
+         PROFIL + KEAMANAN
     ========================================================== --}}
 
     <div class="card">
 
-        <div class="card-header">
 
-            <h3 class="card-title">
+        {{-- =====================================================
+             TAB NAVIGASI
+        ====================================================== --}}
 
-                <i class="fas fa-lock mr-1"></i>
+        <div class="card-header p-0">
 
-                Ubah Password
+            <ul
+                class="nav nav-tabs"
+                id="profileTabs"
+                role="tablist"
+            >
 
-            </h3>
+
+                {{-- =================================================
+                     TAB PROFIL
+                ================================================== --}}
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link {{ $activeTab === 'profil' ? 'active' : '' }}"
+                        id="profile-tab"
+                        data-toggle="tab"
+                        href="#profile"
+                        role="tab"
+                        aria-controls="profile"
+                        aria-selected="{{ $activeTab === 'profil' ? 'true' : 'false' }}"
+                    >
+
+                        <i class="fas fa-user mr-1"></i>
+
+                        Profil
+
+                    </a>
+
+                </li>
+
+
+                {{-- =================================================
+                     TAB KEAMANAN
+                ================================================== --}}
+
+                <li class="nav-item">
+
+                    <a
+                        class="nav-link {{ $activeTab === 'keamanan' ? 'active' : '' }}"
+                        id="security-tab"
+                        data-toggle="tab"
+                        href="#security"
+                        role="tab"
+                        aria-controls="security"
+                        aria-selected="{{ $activeTab === 'keamanan' ? 'true' : 'false' }}"
+                    >
+
+                        <i class="fas fa-lock mr-1"></i>
+
+                        Keamanan
+
+                    </a>
+
+                </li>
+
+            </ul>
 
         </div>
+
+
+        {{-- =====================================================
+             TAB CONTENT
+        ====================================================== --}}
 
         <div class="card-body">
 
-            @include(
-                'profile.partials.update-password-form'
-            )
-
-        </div>
-
-    </div>
+            <div class="tab-content">
 
 
-    {{-- =========================================================
-         HAPUS AKUN
-    ========================================================== --}}
+                {{-- =================================================
+                     TAB PROFIL
+                ================================================== --}}
 
-    <div class="card card-danger">
+                <div
+                    class="tab-pane fade {{ $activeTab === 'profil' ? 'show active' : '' }}"
+                    id="profile"
+                    role="tabpanel"
+                    aria-labelledby="profile-tab"
+                >
 
-        <div class="card-header">
+                    @include(
+                        'profile.partials.update-profile-information-form'
+                    )
 
-            <h3 class="card-title">
+                </div>
 
-                <i class="fas fa-user-times mr-1"></i>
 
-                Hapus Akun
+                {{-- =================================================
+                     TAB KEAMANAN
+                ================================================== --}}
 
-            </h3>
+                <div
+                    class="tab-pane fade {{ $activeTab === 'keamanan' ? 'show active' : '' }}"
+                    id="security"
+                    role="tabpanel"
+                    aria-labelledby="security-tab"
+                >
 
-        </div>
+                    @include(
+                        'profile.partials.update-password-form'
+                    )
 
-        <div class="card-body">
+                </div>
 
-            @include(
-                'profile.partials.delete-user-form'
-            )
+            </div>
 
         </div>
 

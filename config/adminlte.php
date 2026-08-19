@@ -139,11 +139,11 @@ return [
     */
 
     'usermenu_enabled' => true,
-    'usermenu_header' => false,
+    'usermenu_header' => true,
     'usermenu_header_class' => 'bg-primary',
-    'usermenu_image' => false,
+    'usermenu_image' => true,
     'usermenu_desc' => false,
-    'usermenu_profile_url' => false,
+    'usermenu_profile_url' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -358,20 +358,21 @@ return [
             ],
         ],
 
-
         // =========================================================
-        // AKUN
+        // NOTIFIKASI NAVBAR
         // =========================================================
 
         [
-            'header' => 'AKUN',
-        ],
-
-        [
-            'text' => 'Profil',
-            'route' => 'profile.edit',
-            'icon' => 'fas fa-fw fa-user',
-            'can' => 'profile.view',
+            'type' => 'navbar-notification',
+            'id' => 'simteprа-notifications',
+            'icon' => 'fas fa-bell',
+            'icon_color' => 'secondary',
+            'label' => 0,
+            'label_color' => 'danger',
+            'url' => '#',
+            'topnav_right' => true,
+            'dropdown_mode' => true,
+            'dropdown_flabel' => 'Lihat semua notifikasi',
         ],
 
     ],

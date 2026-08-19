@@ -1,0 +1,362 @@
+[1mdiff --git a/app/Http/Controllers/ProfileController.php b/app/Http/Controllers/ProfileController.php[m
+[1mindex 6c5de7a..9999e85 100644[m
+[1m--- a/app/Http/Controllers/ProfileController.php[m
+[1m+++ b/app/Http/Controllers/ProfileController.php[m
+[36m@@ -3,9 +3,7 @@[m
+ namespace App\Http\Controllers;[m
+ [m
+ use App\Http\Requests\ProfileUpdateRequest;[m
+[31m-use App\Models\Profile;[m
+ use Illuminate\Http\RedirectResponse;[m
+[31m-use Illuminate\Support\Facades\DB;[m
+ use Illuminate\Support\Facades\Storage;[m
+ use Illuminate\View\View;[m
+ [m
+[36m@@ -21,25 +19,13 @@[m [mpublic function edit(): View[m
+             403[m
+         );[m
+ [m
+[31m-        $user = auth()->user()->load('profile');[m
+[31m-[m
+[31m-        /*[m
+[31m-        |--------------------------------------------------------------------------[m
+[31m-        | Buat Profile Otomatis Jika Belum Ada[m
+[31m-        |--------------------------------------------------------------------------[m
+[31m-        */[m
+[31m-[m
+[31m-        $profile = $user->profile;[m
+[32m+[m[32m        $user = auth()->user();[m
+ [m
+[31m-        if (!$profile) {[m
+[31m-            $profile = $user->profile()->create([[m
+[31m-                'nama_lengkap' => $user->name,[m
+[31m-            ]);[m
+[31m-        }[m
+[32m+[m[32m        $activeTab = request()->query('tab', 'profil');[m
+ [m
+         return view([m
+             'profile.edit',[m
+[31m-            compact('user', 'profile')[m
+[32m+[m[32m            compact('user', 'activeTab')[m
+         );[m
+     }[m
+ [m
+[36m@@ -64,122 +50,73 @@[m [mpublic function update([m
+ [m
+         /*[m
+         |--------------------------------------------------------------------------[m
+[31m-        | Ambil / Buat Profile[m
+[32m+[m[32m        | Update Data User[m
+         |--------------------------------------------------------------------------[m
+         */[m
+ [m
+[31m-        $profile = $user->profile;[m
+[32m+[m[32m        $emailChanged = $user->email !== $validated['email'];[m
+ [m
+[31m-        if (!$profile) {[m
+[31m-            $profile = new Profile();[m
+[31m-[m
+[31m-            $profile->user_id = $user->id;[m
+[31m-        }[m
+[32m+[m[32m        $user->name = $validated['name'];[m
+[32m+[m[32m        $user->email = $validated['email'];[m
+ [m
+ [m
+         /*[m
+         |--------------------------------------------------------------------------[m
+[31m-        | Update User & Profile[m
+[32m+[m[32m        | Jika Email Berubah[m
+         |--------------------------------------------------------------------------[m
+[32m+[m[32m        |[m
+[32m+[m[32m        | Email baru harus diverifikasi kembali.[m
+[32m+[m[32m        |[m
+         */[m
+ [m
+[31m-        DB::transaction(function () use ([m
+[31m-            $user,[m
+[31m-            $profile,[m
+[31m-            $validated,[m
+[31m-            $request[m
+[31m-        ) {[m
+[32m+[m[32m        if ($emailChanged) {[m
+[32m+[m[32m            $user->email_verified_at = null;[m
+[32m+[m[32m        }[m
+ [m
+[31m-            /*[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            | Update Data User[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            */[m
+ [m
+[31m-            $emailChanged = $user->email !== $validated['email'];[m
+[32m+[m[32m        /*[m
+[32m+[m[32m        |--------------------------------------------------------------------------[m
+[32m+[m[32m        | Upload Foto Profil[m
+[32m+[m[32m        |--------------------------------------------------------------------------[m
+[32m+[m[32m        */[m
+ [m
+[31m-            $user->name = $validated['name'];[m
+[31m-            $user->email = $validated['email'];[m
+[32m+[m[32m        if ($request->hasFile('profile_photo')) {[m
+ [m
+             /*[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            | Jika Email Berubah[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            |[m
+[31m-            | Email baru harus diverifikasi kembali.[m
+[31m-            |[m
+[32m+[m[32m            |----------------------------------------------------------------------[m
+[32m+[m[32m            | Hapus Foto Lama[m
+[32m+[m[32m            |----------------------------------------------------------------------[m
+             */[m
+ [m
+[31m-            if ($emailChanged) {[m
+[31m-                $user->email_verified_at = null;[m
+[32m+[m[32m            if ([m
+[32m+[m[32m                $user->profile_photo &&[m
+[32m+[m[32m                Storage::disk('public')->exists($user->profile_photo)[m
+[32m+[m[32m            ) {[m
+[32m+[m[32m                Storage::disk('public')->delete([m
+[32m+[m[32m                    $user->profile_photo[m
+[32m+[m[32m                );[m
+             }[m
+ [m
+[31m-            $user->save();[m
+[31m-[m
+ [m
+             /*[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            | Update Data Profile[m
+[31m-            |--------------------------------------------------------------------------[m
+[32m+[m[32m            |----------------------------------------------------------------------[m
+[32m+[m[32m            | Simpan Foto Baru[m
+[32m+[m[32m            |----------------------------------------------------------------------[m
+             */[m
+ [m
+[31m-            $profile->nama_lengkap =[m
+[31m-                $validated['nama_lengkap'];[m
+[31m-[m
+[31m-            $profile->nip =[m
+[31m-                $validated['nip'] ?? null;[m
+[31m-[m
+[31m-            $profile->no_hp =[m
+[31m-                $validated['no_hp'] ?? null;[m
+[31m-[m
+[31m-            $profile->jabatan =[m
+[31m-                $validated['jabatan'] ?? null;[m
+[31m-[m
+[31m-            $profile->instansi =[m
+[31m-                $validated['instansi'] ?? null;[m
+[31m-[m
+[31m-            $profile->alamat =[m
+[31m-                $validated['alamat'] ?? null;[m
+[31m-[m
+[31m-[m
+[31m-            /*[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            | Upload Foto Profil[m
+[31m-            |--------------------------------------------------------------------------[m
+[31m-            */[m
+[32m+[m[32m            $user->profile_photo = $request[m
+[32m+[m[32m                ->file('profile_photo')[m
+[32m+[m[32m                ->store('profiles', 'public');[m
+[32m+[m[32m        }[m
+ [m
+[31m-            if ($request->hasFile('foto')) {[m
+[31m-[m
+[31m-                /*[m
+[31m-                |--------------------------------------------------------------------------[m
+[31m-                | Hapus Foto Lama[m
+[31m-                |--------------------------------------------------------------------------[m
+[31m-                */[m
+[31m-[m
+[31m-                if ([m
+[31m-                    $profile->foto &&[m
+[31m-                    Storage::disk('public')[m
+[31m-                        ->exists($profile->foto)[m
+[31m-                ) {[m
+[31m-                    Storage::disk('public')[m
+[31m-                        ->delete($profile->foto);[m
+[31m-                }[m
+[31m-[m
+[31m-[m
+[31m-                /*[m
+[31m-                |--------------------------------------------------------------------------[m
+[31m-                | Simpan Foto Baru[m
+[31m-                |--------------------------------------------------------------------------[m
+[31m-                */[m
+[31m-[m
+[31m-                $profile->foto = $request[m
+[31m-                    ->file('foto')[m
+[31m-                    ->store('profiles', 'public');[m
+[31m-            }[m
+ [m
+[32m+[m[32m        /*[m
+[32m+[m[32m        |--------------------------------------------------------------------------[m
+[32m+[m[32m        | Simpan Perubahan[m
+[32m+[m[32m        |--------------------------------------------------------------------------[m
+[32m+[m[32m        */[m
+ [m
+[31m-            $profile->save();[m
+[31m-        });[m
+[32m+[m[32m        $user->save();[m
+ [m
+ [m
+         /*[m
+[36m@@ -195,16 +132,4 @@[m [mpublic function update([m
+                 'profile-updated'[m
+             );[m
+     }[m
+[31m-[m
+[31m-[m
+[31m-    /**[m
+[31m-     * Menghapus akun pengguna.[m
+[31m-     *[m
+[31m-     * Untuk sementara fitur hapus akun[m
+[31m-     * tidak digunakan pada SIMTEPRA.[m
+[31m-     */[m
+[31m-    public function destroy(): never[m
+[31m-    {[m
+[31m-        abort(404);[m
+[31m-    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/app/Models/User.php b/app/Models/User.php[m
+[1mindex 163343c..d481950 100644[m
+[1m--- a/app/Models/User.php[m
+[1m+++ b/app/Models/User.php[m
+[36m@@ -2,23 +2,49 @@[m
+ [m
+ namespace App\Models;[m
+ [m
+[31m-use App\Models\Profile;[m
+ use Database\Factories\UserFactory;[m
+ use Illuminate\Database\Eloquent\Attributes\Fillable;[m
+ use Illuminate\Database\Eloquent\Attributes\Hidden;[m
+ use Illuminate\Database\Eloquent\Factories\HasFactory;[m
+[31m-use Illuminate\Database\Eloquent\Relations\HasOne;[m
+ use Illuminate\Foundation\Auth\User as Authenticatable;[m
+[31m-use Spatie\Permission\Traits\HasRoles;[m
+ use Illuminate\Notifications\Notifiable;[m
+[32m+[m[32muse Spatie\Permission\Traits\HasRoles;[m
+ [m
+[31m-#[Fillable(['name', 'email', 'password'])][m
+[31m-#[Hidden(['password', 'remember_token'])][m
+[32m+[m[32m#[Fillable([[m
+[32m+[m[32m    'name',[m
+[32m+[m[32m    'email',[m
+[32m+[m[32m    'password',[m
+[32m+[m[32m    'profile_photo',[m
+[32m+[m[32m])][m
+[32m+[m[32m#[Hidden([[m
+[32m+[m[32m    'password',[m
+[32m+[m[32m    'remember_token',[m
+[32m+[m[32m])][m
+ class User extends Authenticatable[m
+ {[m
+     /** @use HasFactory<UserFactory> */[m
+     use HasFactory, Notifiable, HasRoles;[m
+ [m
+[32m+[m[32m    /**[m
+[32m+[m[32m    * Foto profil untuk Laravel-AdminLTE.[m
+[32m+[m[32m    */[m
+[32m+[m[32m    public function adminlte_image(): string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (!empty($this->profile_photo)) {[m
+[32m+[m[32m            return asset('storage/' . $this->profile_photo);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return asset('image/default-avatar.png');[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * URL profil untuk Laravel-AdminLTE.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function adminlte_profile_url(): string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return route('profile.edit');[m
+[32m+[m[32m    }[m
+[32m+[m
+     /**[m
+      * Get the attributes that should be cast.[m
+      *[m
+[36m@@ -31,12 +57,4 @@[m [mprotected function casts(): array[m
+             'password' => 'hashed',[m
+         ];[m
+     }[m
+[31m-[m
+[31m-    /**[m
+[31m-    * Relasi profile pengguna.[m
+[31m-    */[m
+[31m-    public function profile(): HasOne[m
+[31m-    {[m
+[31m-        return $this->hasOne(Profile::class);[m
+[31m-    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/config/adminlte.php b/config/adminlte.php[m
+[1mindex c021a2e..1ffb10b 100644[m
+[1m--- a/config/adminlte.php[m
+[1m+++ b/config/adminlte.php[m
+[36m@@ -139,11 +139,11 @@[m
+     */[m
+ [m
+     'usermenu_enabled' => true,[m
+[31m-    'usermenu_header' => false,[m
+[32m+[m[32m    'usermenu_header' => true,[m
+     'usermenu_header_class' => 'bg-primary',[m
+[31m-    'usermenu_image' => false,[m
+[32m+[m[32m    'usermenu_image' => true,[m
+     'usermenu_desc' => false,[m
+[31m-    'usermenu_profile_url' => false,[m
+[32m+[m[32m    'usermenu_profile_url' => true,[m
+ [m
+     /*[m
+     |--------------------------------------------------------------------------[m
+[36m@@ -358,20 +358,21 @@[m
+             ],[m
+         ],[m
+ [m
+[31m-[m
+         // =========================================================[m
+[31m-        // AKUN[m
+[32m+[m[32m        // NOTIFIKASI NAVBAR[m
+         // =========================================================[m
+ [m
+         [[m
+[31m-            'header' => 'AKUN',[m
+[31m-        ],[m
+[31m-[m
+[31m-        [[m
+[31m-            'text' => 'Profil',[m
+[31m-            'route' => 'profile.edit',[m
+[31m-            'icon' => 'fas fa-fw fa-user',[m
+[31m-            'can' => 'profile.view',[m
+[32m+[m[32m            'type' => 'navbar-notification',[m
+[32m+[m[32m            'id' => 'simteprа-notifications',[m
+[32m+[m[32m            'icon' => 'fas fa-bell',[m
+[32m+[m[32m            'icon_color' => 'secondary',[m
+[32m+[m[32m            'label' => 0,[m
+[32m+[m[32m            'label_color' => 'danger',[m
+[32m+[m[32m            'url' => '#',[m
+[32m+[m[32m            'topnav_right' => true,[m
+[32m+[m[32m            'dropdown_mode' => true,[m
+[32m+[m[32m            'dropdown_flabel' => 'Lihat semua notifikasi',[m
+         ],[m
+ [m
+     ],[m
+[1mdiff --git a/routes/web.php b/routes/web.php[m
+[1mindex 4483246..ea7e839 100644[m
+[1m--- a/routes/web.php[m
+[1m+++ b/routes/web.php[m
+[36m@@ -147,9 +147,6 @@[m
+         Route::patch('/profile', [ProfileController::class, 'update'])[m
+             ->name('profile.update');[m
+ [m
+[31m-        Route::delete('/profile', [ProfileController::class, 'destroy'])[m
+[31m-            ->name('profile.destroy');[m
+[31m-[m
+     });[m
+ [m
+ [m

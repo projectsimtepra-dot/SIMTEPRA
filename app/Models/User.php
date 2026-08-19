@@ -2,22 +2,48 @@
 
 namespace App\Models;
 
-use App\Models\Profile;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'profile_photo',
+])]
+#[Hidden([
+    'password',
+    'remember_token',
+])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles;
+
+    /**
+    * Foto profil untuk Laravel-AdminLTE.
+    */
+    public function adminlte_image(): string
+    {
+        if (!empty($this->profile_photo)) {
+            return asset('storage/' . $this->profile_photo);
+        }
+
+        return asset('image/default-avatar.png');
+    }
+    
+    /**
+     * URL profil untuk Laravel-AdminLTE.
+     */
+    public function adminlte_profile_url(): string
+    {
+        return route('profile.edit');
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -30,13 +56,5 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    /**
-    * Relasi profile pengguna.
-    */
-    public function profile(): HasOne
-    {
-        return $this->hasOne(Profile::class);
     }
 }
